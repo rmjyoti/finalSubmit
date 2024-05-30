@@ -1,0 +1,510 @@
+package com.mycompany.dsa;
+
+import java.io.BufferedReader;
+import java.util.Scanner;
+import java.util.Arrays;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class MainClass {
+
+    static class User {
+        String username;
+        String password;
+    }
+
+    static class Student {
+        String name;
+        int id;
+        String department;
+        String[] courses = new String[MAX_COURSES]; // Assuming a student can take up to 5 courses
+        int[] marks = new int[MAX_COURSES];
+        String session;
+        float cgpa;
+    }
+
+
+    static final int MAX_COURSES = 5;
+
+    // Function to authenticate user
+    static boolean authenticate(User[] users, String username, String password) {
+        for (User user : users) {
+            if (user.username.equals(username) && user.password.equals(password)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 0/1 knapsack algorithm
+    static int _max(int a, int b) {
+        return Math.max(a, b);
+    }
+
+    static void knapsack01(int n, int C, int[] w, int[] v) {
+        int[][] p = new int[n + 1][C + 1];
+        int[] o = new int[n];
+        int k = 0;
+
+        for (int i = 0; i <= n; i++) {
+            for (int j = 0; j <= C; j++) {
+                if (i == 0 || j == 0) {
+                    p[i][j] = 0;
+                } else if (j - w[i - 1] >= 0) {
+                    p[i][j] = _max(p[i - 1][j], v[i - 1] + p[i - 1][j - w[i - 1]]);
+                } else if (j - w[i - 1] < 0) {
+                    p[i][j] = _max(p[i - 1][j], p[i][j - 1]);
+                }
+            }
+        }
+        System.out.println("Max credit: " + p[n][C]);
+
+        for (int i = n, j = C; i > 0; i--) {
+            if (p[i][j] != p[i - 1][j]) {
+                o[k] = i;
+                j -= w[i - 1];
+                k++;
+            }
+        }
+        System.out.print("Courses included: ");
+        for (int i = k - 1; i >= 0; i--) {
+            System.out.print(o[i] + " ");
+        }
+        System.out.println();
+    }
+
+    static void activitySelection(int n, int[][] a) {
+        Arrays.sort(a, (x, y) -> Integer.compare(x[1], y[1]));
+        System.out.println("Following activities are selected:");
+        System.out.printf("(%d, %d)\n", a[0][0], a[0][1]);
+        int x = a[0][1];
+        for (int i = 1; i < n; i++) {
+            if (a[i][0] > x) {
+                x = a[i][1];
+                System.out.printf("(%d, %d)\n", a[i][0], a[i][1]);
+            }
+        }
+    }
+
+    static void avoidTimeOverlappingCourses(Scanner sc) {
+        try {
+            System.out.print("Number of courses (from which we will determine maximum how many and which courses you can take without time overlap): ");
+            int n = sc.nextInt();
+            int[][] a = new int[n][2];
+            for (int i = 0; i < n; i++) {
+                System.out.printf("Give the Start & End time of course %d: ", i + 1);
+                a[i][0] = sc.nextInt();
+                a[i][1] = sc.nextInt();
+            }
+            activitySelection(n, a);
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter valid course timings.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+
+    // Merge sort
+    static void merge(Student[] arr, int l, int mid, int r) {
+        int n1 = mid - l + 1;
+        int n2 = r - mid;
+
+        Student[] leftArr = new Student[n1];
+        Student[] rightArr = new Student[n2];
+
+        System.arraycopy(arr, l, leftArr, 0, n1);
+        System.arraycopy(arr, mid + 1, rightArr, 0, n2);
+
+        int i = 0, j = 0, k = l;
+
+        while (i < n1 && j < n2) {
+            if (leftArr[i].id <= rightArr[j].id) {
+                arr[k++] = leftArr[i++];
+            } else {
+                arr[k++] = rightArr[j++];
+            }
+        }
+
+        while (i < n1) {
+            arr[k++] = leftArr[i++];
+        }
+        while (j < n2) {
+            arr[k++] = rightArr[j++];
+        }
+    }
+
+    static void mergeSort(Student[] arr, int l, int r) {
+        if (l < r) {
+            int mid = (l + r) / 2;
+                    
+            mergeSort(arr, l, mid);
+            mergeSort(arr, mid + 1, r);
+            merge(arr, l, mid, r);
+        }
+    }
+
+    // Binary search
+    static void binarySearch(Student[] arr, int n, Scanner sc) {
+        try {
+            System.out.print("Enter ID: ");
+            int searchId = sc.nextInt();
+            int left = 0, right = n - 1;
+            boolean found = false;
+
+            while (left <= right) {
+                int mid = (left + right) / 2;
+                if (searchId < arr[mid].id) {
+                    right = mid - 1;
+                } else if (searchId > arr[mid].id) {
+                    left = mid + 1;
+                } else {
+                    System.out.println("\nName: " + arr[mid].name);
+                    System.out.println("ID: " + arr[mid].id);
+                    System.out.println("Department: " + arr[mid].department);
+                    System.out.println("Courses:");
+                    for (int j = 0; j < MAX_COURSES; j++) {
+                        if ("END".equals(arr[mid].courses[j])) {
+                            break;
+                        }
+                        System.out.printf("Course %d: %s\n", j + 1, arr[mid].courses[j]);
+                    }
+                    System.out.println("Session: " + arr[mid].session);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                System.out.println("NOT FOUND!!");
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter a valid ID.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+
+    // Function to add a new student to the system
+    static void addStudent(Student[] studentList, int[] numStudents, Scanner sc) {
+        try {
+            Student newStudent = new Student();
+            System.out.print("\nEnter student name: ");
+            sc.nextLine(); // Consume the newline
+            newStudent.name = sc.nextLine();
+            System.out.print("Enter student ID: ");
+            newStudent.id = sc.nextInt();
+            System.out.print("Enter student department: ");
+            newStudent.department = sc.next();
+
+            // Assuming up to 5 courses can be entered
+            System.out.println("Enter up to 5 courses (one per line, 'END' to finish):");
+            for (int i = 0; i < MAX_COURSES; i++) {
+                System.out.printf("Course %d: ", i + 1);
+                newStudent.courses[i] = sc.next();
+                if ("END".equals(newStudent.courses[i])) {
+                    break;
+                }
+            }
+
+            System.out.print("Enter student session: ");
+            newStudent.session = sc.next();
+
+            // Increase the size of the student list
+            studentList[numStudents[0]] = newStudent;
+            numStudents[0]++;
+            System.out.println("\nStudent added successfully!\n");
+
+            // Writing student details to file
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("student_details.txt", true))) {
+                writer.write("Name: " + newStudent.name + "\n");
+                writer.write("ID: " + newStudent.id + "\n");
+                writer.write("Department: " + newStudent.department + "\n");
+                writer.write("Courses:\n");
+                for (int i = 0; i < MAX_COURSES; i++) {
+                    if ("END".equals(newStudent.courses[i])) {
+                        break;
+                    }
+                    writer.write("Course " + (i + 1) + ": " + newStudent.courses[i] + "\n");
+                }
+                writer.write("Session: " + newStudent.session + "\n\n");
+                System.out.println("Student details written to file successfully!");
+            } catch (IOException e) {
+                System.out.println("Error writing student details to file: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter valid student details.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+
+    // Function to display all students
+    static void displayStudentsInfo() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("student_details.txt"))) {
+            String line;
+            System.out.println("List of Students:");
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading student details: " + e.getMessage());
+        }
+    }
+
+
+
+
+    // Store Course Marks and Show Result
+    static void storeCourseMarks(Student[] studentList, int numStudents, Scanner sc) {
+        if (numStudents == 0) {
+            System.out.println("No students found.\n");
+            return;
+        }
+
+        try {
+            System.out.println("List of Students:");
+            for (int i = 0; i < numStudents; i++) {
+                float cg = 0;
+                int totalCourse = 0;
+                System.out.printf("Student %d:\n", i + 1);
+                System.out.println("Name: " + studentList[i].name);
+                System.out.println("ID: " + studentList[i].id);
+                System.out.println("Department: " + studentList[i].department);
+                System.out.println("Session: " + studentList[i].session);
+                System.out.println("Courses and Marks:");
+                for (int j = 0; j < MAX_COURSES; j++) {
+                    if ("END".equals(studentList[i].courses[j])) {
+                        break;
+                    }
+                    System.out.printf("Enter marks for %s: ", studentList[i].courses[j]);
+                    studentList[i].marks[j] = sc.nextInt();
+                    totalCourse++;
+
+                    if (studentList[i].marks[j] >= 80) {
+                        cg += 4.00;
+                    } else if (studentList[i].marks[j] >= 75) {
+                        cg += 3.75;
+                    } else if (studentList[i].marks[j] >= 70) {
+                        cg += 3.50;
+                    } else if (studentList[i].marks[j] >= 65) {
+                        cg += 3.24;
+                    } else if (studentList[i].marks[j] >= 60) {
+                        cg += 3.00;
+                    } else if (studentList[i].marks[j] >= 55) {
+                        cg += 2.75;
+                    } else if (studentList[i].marks[j] >= 50) {
+                        cg += 2.50;
+                    } else if (studentList[i].marks[j] >= 45) {
+                        cg += 2.25;
+                    } else if (studentList[i].marks[j] >= 40) {
+                        cg += 2.00;
+                    } else {
+                        cg = 0.00f;
+                        break;
+                    }
+                }
+                studentList[i].cgpa = cg / totalCourse;
+                System.out.printf("\nCGPA: %.2f\n", studentList[i].cgpa);
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter valid marks.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+
+    // Dynamic Programming to maximize courses with limited credits
+    static void maximizeCoursesWithLimitedCredits(Scanner sc) {
+        try {
+            System.out.println("Your maximum capacity of contact hour is 8h");
+            System.out.print("Enter number of courses (from which to determine maximum how many courses can you take with max credit): ");
+            int n = sc.nextInt();
+            int C = 8;
+            int[] w = new int[n];
+            int[] v = new int[n];
+            for (int i = 0; i < n; i++) {
+                System.out.printf("Enter %dth courses credit and contact hour: ", i + 1);
+                v[i] = sc.nextInt();
+                w[i] = sc.nextInt();
+            }
+            knapsack01(n, C, w, v);
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter valid credits and contact hours.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+
+    // Floyd Warshall algorithm
+    static void floydWarshall(Scanner sc) {
+        try {
+            System.out.print("Enter number of vertices: ");
+            int n = sc.nextInt();
+            int[][] a = new int[n][n];
+            System.out.println("Enter graph of course-career map as adjacency matrix (>=100 for Infinity): ");
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    a[i][j] = sc.nextInt();
+                }
+            }
+            for (int k = 0; k < n; k++) {
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        if (a[i][j] > a[i][k] + a[k][j]) {
+                            a[i][j] = a[i][k] + a[k][j];
+                        }
+                    }
+                }
+            }
+            System.out.println("Optimized graph: All-pairs least cost path:");
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    System.out.print(a[i][j] + "\t");
+                }
+                System.out.println();
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please enter valid graph data.");
+            sc.next(); // clear the scanner buffer
+        }
+    }
+    static int[][] inputSchoolNetwork(Scanner sc) {
+        System.out.print("Enter number of nodes (representing departments, courses, or other entities): ");
+        int V = sc.nextInt();
+        int[][] network = new int[V][V];
+
+        System.out.println("Enter the adjacency matrix for the school network:");
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < V; j++) {
+                System.out.printf("Enter the connection between %d and %d (0 for no connection, 1 for connection): ", i, j);
+                network[i][j] = sc.nextInt();
+            }
+        }
+
+        return network;
+    }
+    static void dijkstra(int[][] network, int src) {
+        int V = network.length;
+        int[] dist = new int[V];
+        boolean[] visited = new boolean[V];
+
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[src] = 0;
+
+        for (int count = 0; count < V - 1; count++) {
+            int u = -1;
+            for (int v = 0; v < V; v++) {
+                if (!visited[v] && (u == -1 || dist[v] < dist[u]))
+                    u = v;
+            }
+
+            visited[u] = true;
+
+            for (int v = 0; v < V; v++) {
+                if (!visited[v] && network[u][v] != 0 && dist[u] != Integer.MAX_VALUE &&
+                        dist[u] + network[u][v] < dist[v]) {
+                    dist[v] = dist[u] + network[u][v];
+                }
+            }
+        }
+
+        System.out.println("Shortest distances from source:");
+        for (int i = 0; i < V; i++) {
+            System.out.println("Node " + i + ": " + dist[i]);
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Initialize user credentials
+        User[] users = new User[2];
+        users[0] = new User();
+        users[0].username = "joya";
+        users[0].password = "joya123";
+        users[1] = new User();
+        users[1].username = "jyoti";
+        users[1].password = "jyoti123";
+        users[1] = new User();
+        users[1].username = "Ayesha";
+        users[1].password = "Ayesha800";
+        // Login
+        String username, password;
+        boolean loggedIn = false;
+        do {
+            System.out.print("Enter username: ");
+            username = sc.next();
+            System.out.print("Enter password: ");
+            password = sc.next();
+            loggedIn = authenticate(users, username, password);
+            if (!loggedIn) {
+                System.out.println("Invalid username or password. Please try again.");
+            } else {
+                System.out.println("Login Successful");
+            }
+        } while (!loggedIn);
+
+        Student[] studentList = new Student[100]; // Arbitrary initial size
+        int[] numStudents = {0};
+
+        int choice;
+        do {
+            System.out.println("\t\t*School Management System*\n\n");
+            try {
+                Thread.sleep(1000); // sleep for 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("1. Add Student");
+            System.out.println("2. Display Students");
+            System.out.println("3. Sort student by ID");
+            System.out.println("4. Search student by ID");
+            System.out.println("5. Store Course marks & Show result");
+            System.out.println("6. Map Courses and Career Paths");
+            System.out.println("7. Dijkstra's algorithm");
+            System.out.println("8. Maximum obtainable credit.");
+            System.out.println("9. Avoid taking time overlapping courses.");
+            System.out.println("10. Exit");
+            System.out.print("\nEnter your choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    addStudent(studentList, numStudents, sc);
+                    break;
+                case 2:
+                    displayStudentsInfo();
+                    break;
+                case 3:
+                    mergeSort(studentList, 0, numStudents[0] - 1);
+                    break;
+                case 4:
+                    mergeSort(studentList, 0, numStudents[0] - 1);
+                    binarySearch(studentList, numStudents[0], sc);
+                    break;
+                case 5:
+                    storeCourseMarks(studentList, numStudents[0], sc);
+                    break;
+                case 6:
+                    floydWarshall(sc);
+                    break;
+                case 7:
+                    int[][] schoolNetwork = inputSchoolNetwork(sc);
+                    dijkstra(schoolNetwork, 0);
+                    break;
+
+                case 8:
+                    maximizeCoursesWithLimitedCredits(sc);
+                    break;
+                case 9:
+                    avoidTimeOverlappingCourses(sc);
+                    break;
+                case 10:
+                    sc.close();
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+                    break;
+            }
+        } while (true);
+    }
+}
